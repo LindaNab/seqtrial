@@ -1,0 +1,38 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# The seqtrial Package
+
+This package for R construct a sequential trial from observational data
+
+# Installation
+
+The package can be installed via
+
+``` r
+devtools::install_github("LindaNab/seqtrial", build_vignettes = TRUE)
+```
+
+# Quick demo
+
+``` r
+library(seqtrial)
+# load the internal paxlovid data
+data("paxlovid", package = "seqtrial")
+paxlovid_splitted <-
+  data_splitter(data = paxlovid,
+                treatment = A,
+                tt_treatment = tt_A)
+# construct trials
+trial_constructor(data = paxlovid_splitted,
+                  n = 5,
+                  treatment = A)
+```
+
+# More examples
+
+Browse the vignettes of the package for more information.
+
+``` r
+browseVignettes(package = "seqtrial")
+```
