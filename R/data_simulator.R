@@ -12,7 +12,7 @@
 #' @param alpha_L parameter data generating mechanism
 #' @param alpha_U parameter data generating mechanism
 #'
-#' @return \code{sim_data} returns a tibble with simulated data
+#' @return \code{data_simulator} returns a tibble with simulated data
 #'
 #' @author Linda Nab, \email{lindanab4@gmail.com}
 #'
