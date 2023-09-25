@@ -77,7 +77,7 @@ construct_trial_n <- function(data_splitted,
 ){
   data_splitted %>%
     dplyr::filter(tstart >= n) %>%
-    dplyr::mutate(trial = n) %>%
+    dplyr::mutate(trial = n + 1) %>%
     dplyr::group_by({{ id }}) %>%
     dplyr::mutate(
       arm = dplyr::first({{ treatment }}),
