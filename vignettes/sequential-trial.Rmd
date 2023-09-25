@@ -1,0 +1,110 @@
+---
+title: "sequential-trial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{sequential-trial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+This vignette describes the use of the functions `data_splitter()` and `trial_constructor()`. These functions are the core elements of the package `seqtrial`. Their goal is to reformat a survival data into a 'counting process' format and to construct a sequence of trials from that. Typically, these functions are used is a subsequent manner.
+
+For the construction of a sequence of trials from observational data, survival data needs to be in a 'counting process' format. A counting process form of data allows analyses of data that contain fixed variables and time-varying variables. Typical examples of time-varying variables in our setting are treatment status and confounding variables that influence the treatment decision and the outcome. An example of a fixed variable is sex. The function `data_splitter()` splits a survival data set into multiple subrecords at time intervals of length 1 for the duration of follow-up and adds a column indicating treatment status in each of the intervals.
+
+In a sequential trial, a trial is constructed at each day of follow-up. Each of these trials consists of two arms: a treated arm and an untreated arm. In trial 0, all individuals who have started treatment on day 0 (day zero) are included in the treated arm; all individuals who have not started treatment on day 0 (but may start treatment later during follow-up) are included in the untreated arm. In trial 1, all individuals who have started treatment on day 1 are included in the treatment arm; all individuals who have not started treatment by day 1 (but may start treatment later during follow-up) are included in the untreated arm. Individuals who had started treatment on day 0 are excluded from trial 1 and later trials. The same logic applies for subsequent trials. The function `trial_constructor()` constructs trials from data in a counting process format.
+
+In this vignette, you will learn the key ideas behind `data_splitter()` and `trial_constructor()`.
+
+To begin, you will need to load the `seqtrial` and `dplyr` package.
+```{r setup}
+library(seqtrial)
+library(dplyr)
+```
+
+# Split Data
+`data_splitter()` splits survival data set by creating new rows of intervals of length 1 for the duration of follow-up. To accommodate the creation of these new rows, the new colums `tstart` and `tend` will be added. For follow-up equal to `fup`, a new row will be added for intervals 0-1, 1-2, ..., 2-`fup`. In the last row `fup`-1-`fup`, the `status` column will indicate if an outcome was experienced or not. The time-varying `treatment` column will indicate if treatment was started in a interval. It is assumed that there is only one switch, that is, once treatment is started, it is continued.
+
+## Example
+Data set `paxlovid` comprises two individuals followed-up for `fup` days. The `status` column indicates if an outcome was experienced at the end of follow-up. Both individuals have started treatment `A` after `tt_A` days (time-to-treatment). Column `L` indicates the fixed variable sex.
+```{r paxlovid-example}
+paxlovid
+```
+
+To split into a 'counting process' format, we use `data_splitter()`:
+```{r paxlovid-splitter}
+paxlovid %>%
+  data_splitter(treatment = A,
+                tt_treatment = tt_A)
+```
+
+- The first argument is the data to be split, `paxlovid`. 
+- `treatment` describes the treatment column in `data`, in this case that is `A`. 
+- `tt_treatment` describes the column denoting time-to-treatment, in this case that is `tt_A`.
+- Note that the arguments `id`, `fup`, `status` were not used since the default values for these columns could be used (which are `id`, `fup` and `status`, all existent in `paxlovid`). 
+
+## Note on time-to-treatment variable
+Note that time-to-treatment indicates the number of days (or weeks/months/years if another scale is used) without treatment. In other words, 0 indicates that there were 0 intervals without treatment and treatment was started in the first interval, 1 indicates that the first interval was without treatment and treatment was started in interval two, 2 indicates the first two interval were without treatment, .., t indicates the first t intervals were without treatment and treatment was started in day t:t+1. 
+
+In contrast, a fup of t days with status indicator 1 means that an outcome was experienced in interval t-1:t (assuming right-closed intervals).
+
+# Construct Trials
+`trial_constructor()` helps constructing trials once data has been split and is in 'counting process' format. The constructed trials start in the first interval and end at `n-1`-`n`.
+
+## Example
+```{r paxlovid-trialconstructor}
+trials <- 
+  paxlovid %>%
+    data_splitter(treatment = A,
+                  tt_treatment = tt_A) %>%
+    trial_constructor(n = 5,
+                      treatment = A)
+trials
+```
+
+- The first argument is the data split using `data_splitter()`.
+- `n` describes the number of trials to construct.
+- `treatment` describes the treatment column in `data_splitted`.
+- Note that the arguments `id` and `status` were not used since the default values for these values could be used (which are `id` and `status`, all existent in the splitted `paxlovid` data, see above).
+- `censor` indicates if individuals in the no-treatment arm of an trial are censored when they start treatment.
+
+The resulting tibble comprises 5 trials. Individual 1 starts treatment after 4 intervals and individual 2 starts treatment after 3 intervals. This means that in the first 3 trials, individuals 1 and 2 are both in the untreated arm. In trial 4, individual 1 is in the untreated arm and individual 2 in the treated arm. In the fifth trial, both individuals are in the treated arm.
+
+```{r paxlovid-trials}
+trials %>%
+  group_by(trial, arm) %>%
+  summarise(n = id %>% unique() %>% length(),
+            .groups = "keep")
+```
+
+## Deviation from baseline treatment status
+Since both individuals start treatment during follow-up, they deviate from their baseline treatment in some of the constructed trials. `trial_constructor()` can censor the individuals as soon as they deviate from their baseline treatment. For example, in trial 1, individual 1 starts treatment after 4 intervals and therefore only the first 4 intervals are included in the no-treatment arm. Individual 2 starts treatment after 3 intervals and therefore only the first 3 intervals are included in the no-treatment arm of trial 1.
+```{r paxlovid-trialconstructor-censored}
+trials_censored <- 
+  paxlovid %>%
+    data_splitter(treatment = A,
+                  tt_treatment = tt_A) %>%
+    trial_constructor(n = 5,
+                      treatment = A,
+                      censor = TRUE)
+trials_censored %>%
+  filter(trial == 1) %>%
+  group_by(id, arm) %>%
+  summarise(n_interval = n(),
+            .groups = "keep")
+```
+In trial 4, individual 1 only contributes their observed interval 3-4 in the untreated arm and individual 2 contributes intervals 3-18 (which equals 15 intervals). Note that `tstart` and `tend` in trial 4 start again at 0 and 1, respectively: interval 0-1 in trial 4 is interval 3-4 in trial 1.
+```{r paxlovid-trialconstructor-censored}
+trials_censored %>%
+  filter(trial == 4) %>%
+  group_by(id, arm) %>%
+  summarise(n_interval = n(),
+            .groups = "keep")
+```
