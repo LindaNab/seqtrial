@@ -42,7 +42,7 @@ data_splitter <- function(
     dplyr::mutate(tend = dplyr::row_number(),
                   tstart = tend - 1L,
                   "{{ status }}" := dplyr::if_else(tend == {{ fup }}, {{ status }}, 0L),
-                  "{{ treatment }}" := dplyr::if_else(tend == {{ tt_treatment }} | tend > {{ tt_treatment }}, {{ treatment }}, 0L)) %>%
+                  "{{ treatment }}" := dplyr::if_else(tstart == {{ tt_treatment }} | tstart > {{ tt_treatment }}, {{ treatment }}, 0L)) %>%
     dplyr::select(- c({{ fup }}, {{ tt_treatment }})) %>%
     dplyr::relocate({{ id }}, tstart, tend) %>%
     dplyr::ungroup()
