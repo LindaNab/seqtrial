@@ -16,7 +16,7 @@ trial_constructor(
 \arguments{
 \item{data_splitted}{a data frame that has been split using data_splitter()}
 
-\item{n}{number of trials to construct, starting at baseline, n => 1}
+\item{n}{number of trials to construct, starting at baseline, n >= 1}
 
 \item{id}{column with unique patient identifier (defaults to id)}
 

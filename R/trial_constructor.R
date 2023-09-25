@@ -4,7 +4,7 @@
 #' Construct a sequence of trials
 #'
 #' @param data_splitted a data frame that has been split using data_splitter()
-#' @param n number of trials to construct, starting at baseline, n => 1
+#' @param n number of trials to construct, starting at baseline, n >= 1
 #' @param id column with unique patient identifier (defaults to id)
 #' @param status column with the status indicator (defaults to status)
 #' @param treatment column with the treatment indicator
