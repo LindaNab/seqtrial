@@ -85,17 +85,15 @@ construct_trial_n <- function(data_splitted,
     dplyr::mutate(
       arm = dplyr::first({{ treatment }}),
       treatment_lag1_baseline = dplyr::first(treatment_lag1),
-      status_baseline = dplyr::first({{ status }}),
       tstart = tstart - n,
       tend = tend - n
       ) %>%
     dplyr::filter(
-      treatment_lag1_baseline == 0,
-      status_baseline == 0
+      treatment_lag1_baseline == 0
       ) %>%
     dplyr::ungroup() %>%
     dplyr::select(
-      -c(status_baseline, treatment_lag1_baseline, treatment_lag1)
+      -c(treatment_lag1_baseline, treatment_lag1)
       ) %>%
     #dplyr::rename("{{ treatment }}_lag1" := treatment_lag1) %>%
     dplyr::relocate({{ id }}, trial, arm)
