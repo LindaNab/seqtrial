@@ -76,20 +76,27 @@ construct_trial_n <- function(data_splitted,
                               status # status var
 ){
   data_splitted %>%
-    dplyr::filter(tstart >= n) %>%
-    dplyr::mutate(trial = n + 1) %>%
     dplyr::group_by({{ id }}) %>%
     dplyr::mutate(
+      treatment_lag1 = dplyr::lag({{ treatment }}, n = 1, default = 0)
+      ) %>%
+    dplyr::filter(tstart >= n) %>%
+    dplyr::mutate(trial = n + 1) %>%
+    dplyr::mutate(
       arm = dplyr::first({{ treatment }}),
-      treatment_lag1 = dplyr::lag({{ treatment }}, n = 1, default = 0),
       treatment_lag1_baseline = dplyr::first(treatment_lag1),
       status_baseline = dplyr::first({{ status }}),
       tstart = tstart - n,
-      tend = tend - n) %>%
-    dplyr::filter(treatment_lag1_baseline == 0,
-                  status_baseline == 0) %>%
+      tend = tend - n
+      ) %>%
+    dplyr::filter(
+      treatment_lag1_baseline == 0,
+      status_baseline == 0
+      ) %>%
     dplyr::ungroup() %>%
-    dplyr::select(-c(status_baseline, treatment_lag1_baseline, treatment_lag1)) %>%
+    dplyr::select(
+      -c(status_baseline, treatment_lag1_baseline, treatment_lag1)
+      ) %>%
     #dplyr::rename("{{ treatment }}_lag1" := treatment_lag1) %>%
     dplyr::relocate({{ id }}, trial, arm)
 }
