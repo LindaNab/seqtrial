@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 # Introduction
-This vignette describes the use of the functions `data_splitter()` and `trial_constructor()`. These functions are the core elements of the package `seqtrial`. Their goal is to reformat a survival data into a 'counting process' format and to construct a sequence of trials from that. Typically, these functions are used is a subsequent manner.
+This vignette describes the use of the functions `data_splitter()` and `trial_constructor()`. These functions are the core elements of the package `seqtrial`. Their goal is to reformat a survival data into a 'counting process' format and to construct a sequence of trials from that. Typically, these functions are used in a subsequent manner.
 
 For the construction of a sequence of trials from observational data, survival data needs to be in a 'counting process' format. A counting process form of data allows analyses of data that contain fixed variables and time-varying variables. Typical examples of time-varying variables in our setting are treatment status and confounding variables that influence the treatment decision and the outcome. An example of a fixed variable is sex. The function `data_splitter()` splits a survival data set into multiple subrecords at time intervals of length 1 for the duration of follow-up and adds a column indicating treatment status in each of the intervals.
 
@@ -30,7 +30,7 @@ library(dplyr)
 ```
 
 # Split Data
-`data_splitter()` splits survival data set by creating new rows of intervals of length 1 for the duration of follow-up. To accommodate the creation of these new rows, the new colums `tstart` and `tend` will be added. For follow-up equal to `fup`, a new row will be added for intervals 0-1, 1-2, ..., 2-`fup`. In the last row `fup`-1-`fup`, the `status` column will indicate if an outcome was experienced or not. The time-varying `treatment` column will indicate if treatment was started in a interval. It is assumed that there is only one switch, that is, once treatment is started, it is continued.
+`data_splitter()` splits a survival data set by creating new rows of intervals of length 1 for the duration of follow-up. To accommodate the creation of these new rows, the new colums `tstart` and `tend` will be added. For follow-up equal to `fup`, a new row will be added for intervals 0-1, 1-2, ..., 2-`fup`. In the last row `fup`-1-`fup`, the `status` column will indicate if an outcome was experienced or not. The time-varying `treatment` column will indicate if treatment was started in a interval. It is assumed that there is only one switch, that is, once treatment is started, it is continued.
 
 ## Example
 Data set `paxlovid` comprises two individuals followed-up for `fup` days. The `status` column indicates if an outcome was experienced at the end of follow-up. Both individuals have started treatment `A` after `tt_A` days (time-to-treatment). Column `L` indicates the fixed variable sex.
@@ -101,7 +101,7 @@ trials_censored %>%
             .groups = "keep")
 ```
 In trial 4, individual 1 only contributes their observed interval 3-4 in the untreated arm and individual 2 contributes intervals 3-18 (which equals 15 intervals). Note that `tstart` and `tend` in trial 4 start again at 0 and 1, respectively: interval 0-1 in trial 4 is interval 3-4 in trial 1.
-```{r paxlovid-trialconstructor-censored}
+```{r}
 trials_censored %>%
   filter(trial == 4) %>%
   group_by(id, arm) %>%
